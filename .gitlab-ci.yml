@@ -1,0 +1,33 @@
+yaml# Указываем изображение Docker, которое будем использовать для выполнения инструкций
+image: docker:latest
+
+# Используем сервис Docker-in-Docker (dind) для поддержки Docker команд
+services:
+  - docker:dind
+
+# Определяем стадии, через которые будет проходить наш конвейер
+stages:
+  - build
+  - push
+
+# Переменные окружения (замените на свои значения)
+variables:
+  IMAGE_NAME: "registry.gitlab.com/Practic/BUN/bun-react-app"
+  DOCKER_DRIVER: overlay2
+
+# Этап: сборка Docker-образа
+build:
+  stage: build
+  script:
+    - docker build -t $IMAGE_NAME:latest .
+  only:
+    - main  # запускаем этот этап только для ветки main
+
+# Этап: пуш Docker-образа в GitLab Container Registry
+push:
+  stage: push
+  script:
+    - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
+    - docker push $IMAGE_NAME:latest
+  only:
+    - main  # запускаем этот этап только для ветки main
